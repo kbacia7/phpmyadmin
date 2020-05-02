@@ -39,11 +39,34 @@ class Advisor
     public const GENERIC_RULES_FILE = 'libraries/advisory_rules_generic.txt';
     public const BEFORE_MYSQL80003_RULES_FILE = 'libraries/advisory_rules_mysql_before80003.txt';
 
+    /**
+     * @var DatabaseInterface
+     */
     protected $dbi;
+
+    /**
+     * @var array
+     */
     protected $variables;
+
+    /**
+     * @var array
+     */
     protected $globals;
+
+    /**
+     * @var array
+     */
     protected $parseResult;
+
+    /**
+     * @var array
+     */
     protected $runResult;
+
+    /**
+     * @var ExpressionLanguage
+     */
     protected $expression;
 
     /**
@@ -62,6 +85,10 @@ class Advisor
             'round',
             function () {
             },
+            /**
+             * @param null $arguments
+             * @param float $num
+             */
             function ($arguments, $num) {
                 return round($num);
             }
@@ -70,6 +97,12 @@ class Advisor
             'substr',
             function () {
             },
+            /**
+             * @param null $arguments
+             * @param string $string
+             * @param int $start
+             * @param int $length
+             */
             function ($arguments, $string, $start, $length) {
                 return substr($string, $start, $length);
             }
@@ -78,6 +111,11 @@ class Advisor
             'preg_match',
             function () {
             },
+            /**
+             * @param null $arguments
+             * @param string $pattern
+             * @param string $subject
+             */
             function ($arguments, $pattern, $subject) {
                 return preg_match($pattern, $subject);
             }
@@ -86,6 +124,11 @@ class Advisor
             'ADVISOR_bytime',
             function () {
             },
+            /**
+             * @param null $arguments
+             * @param float $num
+             * @param int $precision
+             */
             function ($arguments, $num, $precision) {
                 return self::byTime($num, $precision);
             }
@@ -94,6 +137,10 @@ class Advisor
             'ADVISOR_timespanFormat',
             function () {
             },
+            /**
+             * @param null $arguments
+             * @param string $seconds
+             */
             function ($arguments, $seconds) {
                 return self::timespanFormat((int) $seconds);
             }
@@ -102,6 +149,12 @@ class Advisor
             'ADVISOR_formatByteDown',
             function () {
             },
+            /**
+             * @param null $arguments
+             * @param int $value
+             * @param int $limes
+             * @param int $comma
+             */
             function ($arguments, $value, $limes = 6, $comma = 0) {
                 return self::formatByteDown($value, $limes, $comma);
             }
@@ -110,6 +163,10 @@ class Advisor
             'fired',
             function () {
             },
+            /**
+             * @param null $arguments
+             * @param int $value
+             */
             function ($arguments, $value) {
                 if (! isset($this->runResult['fired'])) {
                     return 0;

@@ -238,6 +238,9 @@ return [
                 'db' => '%db%',
                 'relation' => '@relation',
                 'replication' => '@replication',
+                'transformations' => '@transformations',
+                'relationCleanup' => '@relation_cleanup',
+                'operations' => '@operations',
             ],
         ],
         PhpMyAdmin\Controllers\Database\TrackingController::class =>
@@ -498,6 +501,8 @@ return [
                 'response' => '@response',
                 'dbi' => '@dbi',
                 'template' => '@template',
+                'transformations' => '@transformations',
+                'relationCleanup' => '@relation_cleanup',
             ],
         ],
         PhpMyAdmin\Controllers\Server\BinlogController::class =>
@@ -947,6 +952,7 @@ return [
                 'relation' => '@relation',
                 'transformations' => '@transformations',
                 'create_add_field' => '@create_add_field',
+                'relationCleanup' => '@relation_cleanup',
             ],
         ],
         PhpMyAdmin\Controllers\Table\TrackingController::class =>

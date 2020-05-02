@@ -14,6 +14,9 @@ use stdClass;
  */
 class VersionInformationTest extends PmaTestCase
 {
+    /**
+     * @var stdClass[]
+     */
     private $_releases;
 
     /**
@@ -321,18 +324,18 @@ class VersionInformationTest extends PmaTestCase
         return [
             [
                 [
-                    (object) [
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=5.5,<8.0',
                         'version' => '4.9.3',
                         'mysql_versions' => '>=5.5',
-                    ],
-                    (object) [
+                    ]),
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=7.1,<8.0',
                         'version' => '5.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
+                    ]),
                 ],
                 [
                     [
@@ -356,18 +359,18 @@ class VersionInformationTest extends PmaTestCase
             ],
             [
                 [
-                    (object) [
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=5.5,<7.0',
                         'version' => '6.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
-                    (object) [
+                    ]),
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=7.1,<8.0',
                         'version' => '5.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
+                    ]),
                 ],
                 [
                     [
@@ -387,18 +390,18 @@ class VersionInformationTest extends PmaTestCase
             ],
             [
                 [
-                    (object) [
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=5.5,<7.0',
                         'version' => '6.0.0-rc1',
                         'mysql_versions' => '>=5.5',
-                    ],
-                    (object) [
+                    ]),
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=7.1,<8.0',
                         'version' => '6.0.0-rc2',
                         'mysql_versions' => '>=5.5',
-                    ],
+                    ]),
                 ],
                 [
                     [
@@ -418,18 +421,18 @@ class VersionInformationTest extends PmaTestCase
             ],
             [
                 [
-                    (object) [
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=5.5,<7.0',
                         'version' => '6.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
-                    (object) [
+                    ]),
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=7.1,<8.0',
                         'version' => '5.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
+                    ]),
                 ],
                 [
                     [
@@ -449,18 +452,18 @@ class VersionInformationTest extends PmaTestCase
             ],
             [
                 [
-                    (object) [
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=5.5,<7.0',
                         'version' => '6.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
-                    (object) [
+                    ]),
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=7.1,<8.0',
                         'version' => '5.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
+                    ]),
                 ],
                 [
                     [
@@ -480,18 +483,18 @@ class VersionInformationTest extends PmaTestCase
             ],
             [
                 [
-                    (object) [
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=5.5,<8.0',
                         'version' => '4.9.3',
                         'mysql_versions' => '>=5.5',
-                    ],
-                    (object) [
+                    ]),
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=7.1,<8.0',
                         'version' => '5.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
+                    ]),
                 ],
                 [
                     [
@@ -515,18 +518,18 @@ class VersionInformationTest extends PmaTestCase
             ],
             [
                 [
-                    (object) [
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=7.1,<8.0',
                         'version' => '5.0.0',
                         'mysql_versions' => '>=5.5',
-                    ],
-                    (object) [
+                    ]),
+                    ((object) [
                         'date' => '2019-12-26',
                         'php_versions' => '>=5.5,<8.0',
                         'version' => '4.9.3',
                         'mysql_versions' => '>=5.5',
-                    ],
+                    ]),
                 ],
                 [
                     [

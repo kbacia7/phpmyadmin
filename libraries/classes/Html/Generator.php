@@ -216,37 +216,6 @@ class Generator
     }
 
     /**
-     * Generates a slider effect (jQjuery)
-     * Takes care of generating the initial <div> and the link
-     * controlling the slider; you have to generate the </div> yourself
-     * after the sliding section.
-     *
-     * @param string      $id              the id of the <div> on which to apply the effect
-     * @param string      $message         the message to show as a link
-     * @param string|null $overrideDefault override InitialSlidersState config
-     *
-     * @return string         html div element
-     *
-     * @throws Throwable
-     * @throws Twig_Error_Loader
-     * @throws Twig_Error_Runtime
-     * @throws Twig_Error_Syntax
-     */
-    public static function getDivForSliderEffect($id = '', $message = '', $overrideDefault = null): string
-    {
-        $template = new Template();
-        return $template->render(
-            'div_for_slider_effect',
-            [
-                'id' => $id,
-                'initial_sliders_state' => $overrideDefault != null ? $overrideDefault
-                    : $GLOBALS['cfg']['InitialSlidersState'],
-                'message' => $message,
-            ]
-        );
-    }
-
-    /**
      * Creates an AJAX sliding toggle button
      * (or and equivalent form when AJAX is disabled)
      *
@@ -867,16 +836,9 @@ class Generator
             // be checked, which would reexecute an INSERT, for example
             if (! empty($refresh_link) && Util::profilingSupported()) {
                 $retval .= '<input type="hidden" name="profiling_form" value="1">';
-                $retval .= $template->render(
-                    'checkbox',
-                    [
-                        'html_field_name' => 'profiling',
-                        'label' => __('Profiling'),
-                        'checked' => isset($_SESSION['profiling']),
-                        'onclick' => true,
-                        'html_field_id' => '',
-                    ]
-                );
+                $retval .= '<input type="checkbox" name="profiling" id="profilingCheckbox" class="autosubmit"';
+                $retval .= isset($_SESSION['profiling']) ? ' checked' : '';
+                $retval .= '> <label for="profilingCheckbox">' . __('Profiling') . '</label>';
             }
             $retval .= '</form>';
 

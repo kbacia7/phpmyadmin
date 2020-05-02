@@ -1,11 +1,8 @@
 <form action="{{ action|raw }}" method="post">
-  {{ get_hidden_inputs(ur_params) }}
+  {{ get_hidden_inputs(url_params) }}
 
   <fieldset class="confirmation">
     <legend>
-      {% if what == 'drop_db' %}
-        {% trans 'You are about to DESTROY a complete database!' %}
-      {% endif %}
       {% trans 'Do you really want to execute the following query?' %}
     </legend>
 
@@ -13,7 +10,7 @@
   </fieldset>
 
   <fieldset class="tblFooters">
-    {% if what == 'drop_tbl' or what == 'empty_tbl' or what == 'row_delete' %}
+    {% if what == 'drop_tbl' or what == 'empty_tbl' %}
       <div id="foreignkeychk">
         <input type="hidden" name="fk_checks" value="0">
         <input type="checkbox" name="fk_checks" id="fk_checks" value="1"{{ is_foreign_key_check ? ' checked' }}>

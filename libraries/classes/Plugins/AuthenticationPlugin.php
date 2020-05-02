@@ -190,7 +190,8 @@ abstract class AuthenticationPlugin
             return __('Access denied!');
         } elseif ($failure == 'no-activity') {
             return sprintf(
-                __('No activity within %s seconds; please log in again.'),
+                __('You have been automatically logged out due to inactivity of %s seconds.'
+                . ' Once you log in again, you should be able to resume the work where you left off.'),
                 intval($GLOBALS['cfg']['LoginCookieValidity'])
             );
         }
@@ -328,9 +329,9 @@ abstract class AuthenticationPlugin
      * Checks whether two factor authentication is active
      * for given user and performs it.
      *
-     * @return bool|void
+     * @return void
      */
-    public function checkTwoFactor()
+    public function checkTwoFactor(): void
     {
         $twofactor = new TwoFactor($this->user);
 

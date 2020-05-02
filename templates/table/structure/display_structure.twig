@@ -1,5 +1,6 @@
 {% extends 'table/page_with_secondary_tabs.twig' %}
 {% block content %}
+<h1 class="d-none d-print-block">{{table}}</h1>
 <form method="post" action="{{ url('/table/structure') }}" name="fieldsForm" id="fieldsForm"
     class="ajax{{ hide_structure_actions ? ' HideStructureActions' }}">
     {{ get_hidden_inputs(db, table) }}
@@ -575,12 +576,9 @@
             {% set action_icons = action_icons|merge({'DROP': get_icon('b_drop', 'Drop'|trans)}) %}
         {% endif %}
 
-        {# open Slider Effect div #}
-        {% include 'div_for_slider_effect.twig' with {
-            'id': 'partitions-2',
-            'message': 'Partitions'|trans,
-            'initial_sliders_state': default_sliders_state
-        } only %}
+        <div id="partitions-2"{% if default_sliders_state != 'disabled' -%}
+            {{- default_sliders_state == 'closed' ? ' style="display: none; overflow:auto;"' }} class="pma_auto_slider" title="{% trans 'Partitions' %}"
+        {%- endif %}>
 
         {% set remove_sql = 'ALTER TABLE ' ~ backquote(table) ~ ' REMOVE PARTITIONING' %}
         {% set remove_url = url('/sql') ~ url_query ~ '&sql_query=' ~ remove_sql|url_encode %}
@@ -606,7 +604,6 @@
             'table': table
         } only %}
     {% endif %}
-    {# For closing Slider effect div #}
     </div>
 {% endif %}
 

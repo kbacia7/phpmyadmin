@@ -16,6 +16,7 @@ use PhpMyAdmin\Template;
 use PhpMyAdmin\Tests\Stubs\DbiDummy;
 use PhpMyAdmin\Url;
 use PhpMyAdmin\Util;
+use PhpMyAdmin\Message;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use function htmlspecialchars;
@@ -1127,6 +1128,8 @@ class PrivilegesTest extends TestCase
             $sql_query
         );
 
+        $this->assertInstanceOf(Message::class, $message);
+
         //validate 6: $message
         $this->assertEquals(
             'You have added a new user.',
@@ -1513,7 +1516,7 @@ class PrivilegesTest extends TestCase
 
         //sql_query
         $this->assertEquals(
-            Generator::getMessage(null, $sql_query),
+            Generator::getMessage('', $sql_query),
             $extra_data['sql_query']
         );
 

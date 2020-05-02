@@ -1,10 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace PhpMyAdmin\Controllers\Table;
 
+use PhpMyAdmin\Common;
 use PhpMyAdmin\Sql;
 use PhpMyAdmin\Url;
+use PhpMyAdmin\Util;
 use function is_array;
 
 /**
@@ -12,124 +15,117 @@ use function is_array;
  */
 class RowActionController extends AbstractController
 {
-    public function index(): void
+    public function delete(): void
     {
-        global $db, $goto, $pmaThemeImage, $sql_query, $table,  $disp_message, $disp_query, $action;
-        global $submit_mult, $active_page, $err_url, $original_sql_query, $url_query, $original_url_query;
+        global $db, $goto, $pmaThemeImage, $sql_query, $table, $disp_message, $disp_query;
+        global $active_page, $url_query;
 
-        if (isset($_POST['submit_mult'])) {
-            $submit_mult = $_POST['submit_mult'];
-            // workaround for IE problem:
-        } elseif (isset($_POST['submit_mult_delete_x'])) {
-            $submit_mult = 'row_delete';
-        }
+        $mult_btn = $_POST['mult_btn'] ?? '';
+        $original_sql_query = $_POST['original_sql_query'] ?? '';
+        $selected = $_POST['selected'] ?? [];
 
-        if (isset($_POST['submit_mult_change_x'])
-            || $submit_mult === 'row_edit' || $submit_mult === 'edit'
-            || $submit_mult === 'row_copy' || $submit_mult === 'copy'
-        ) {
-            $this->edit();
+        $sql = new Sql();
 
-            return;
-        }
+        if ($mult_btn === __('Yes')) {
+            $default_fk_check_value = Util::handleDisableFKCheckInit();
+            $sql_query = '';
 
-        if (isset($_POST['submit_mult_export_x']) || $submit_mult === 'row_export' || $submit_mult === 'export') {
-            $this->export();
-
-            return;
-        }
-
-        // If the 'Ask for confirmation' button was pressed, this can only come
-        // from 'delete' mode, so we set it straight away.
-        if (isset($_POST['mult_btn'])) {
-            $submit_mult = 'row_delete';
-        }
-
-        switch ($submit_mult) {
-            case 'row_delete':
-                // leave as is
-                break;
-
-            case 'delete':
-                $submit_mult = 'row_delete';
-                break;
-        }
-
-        if (! empty($submit_mult)) {
-            if (isset($_POST['goto'])
-                && (! isset($_POST['rows_to_delete'])
-                    || ! is_array($_POST['rows_to_delete']))
-            ) {
-                $this->response->setRequestStatus(false);
-                $this->response->addJSON('message', __('No row selected.'));
+            foreach ($selected as $row) {
+                $query = sprintf(
+                    'DELETE FROM %s WHERE %s LIMIT 1;',
+                    Util::backquote($table),
+                    $row
+                );
+                $sql_query .= $query . "\n";
+                $this->dbi->selectDb($db);
+                $result = $this->dbi->query($query);
             }
 
-            switch ($submit_mult) {
-                case 'row_delete':
-                default:
-                    $action = Url::getFromRoute('/table/row-action');
-                    $err_url = Url::getFromRoute('/table/row-action', $GLOBALS['url_params']);
-                    if (! isset($_POST['mult_btn'])) {
-                        $original_sql_query = $sql_query;
-                        if (! empty($url_query)) {
-                            $original_url_query = $url_query;
-                        }
-                    }
-                    include ROOT_PATH . 'libraries/mult_submits.inc.php';
-                    $_url_params = $GLOBALS['url_params'];
-                    $_url_params['goto'] = Url::getFromRoute('/table/sql');
-                    $url_query = Url::getCommon($_url_params);
-
-                    /**
-                     * Show result of multi submit operation
-                     */
-                    // sql_query is not set when user does not confirm multi-delete
-                    if ((! empty($submit_mult) || isset($_POST['mult_btn']))
-                        && ! empty($sql_query)
-                    ) {
-                        $disp_message = __('Your SQL query has been executed successfully.');
-                        $disp_query = $sql_query;
-                    }
-
-                    if (isset($original_sql_query)) {
-                        $sql_query = $original_sql_query;
-                    }
-
-                    if (isset($original_url_query)) {
-                        $url_query = $original_url_query;
-                    }
-
-                    $active_page = Url::getFromRoute('/sql');
-                    $sql = new Sql();
-                    $sql->executeQueryAndSendQueryResponse(
-                        null,
-                        false,
-                        $db,
-                        $table,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        $goto,
-                        $pmaThemeImage,
-                        null,
-                        null,
-                        null,
-                        $sql_query,
-                        null,
-                        null
-                    );
+            if (! empty($_REQUEST['pos'])) {
+                $_REQUEST['pos'] = $sql->calculatePosForLastPage(
+                    $db,
+                    $table,
+                    $_REQUEST['pos']
+                );
             }
+
+            Util::handleDisableFKCheckCleanup($default_fk_check_value);
+
+            $disp_message = __('Your SQL query has been executed successfully.');
+            $disp_query = $sql_query;
         }
+
+        $_url_params = $GLOBALS['url_params'];
+        $_url_params['goto'] = Url::getFromRoute('/table/sql');
+        $url_query = Url::getCommon($_url_params);
+
+        if (isset($original_sql_query)) {
+            $sql_query = $original_sql_query;
+        }
+
+        $active_page = Url::getFromRoute('/sql');
+
+        $sql->executeQueryAndSendQueryResponse(
+            null,
+            false,
+            $db,
+            $table,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            $goto,
+            $pmaThemeImage,
+            null,
+            null,
+            null,
+            $sql_query,
+            null,
+            null
+        );
     }
 
-    private function edit(): void
+    public function confirmDelete(): void
+    {
+        global $db, $table, $sql_query;
+
+        $selected = $_POST['rows_to_delete'] ?? null;
+
+        if (! isset($selected) || ! is_array($selected)) {
+            $this->response->setRequestStatus(false);
+            $this->response->addJSON('message', __('No row selected.'));
+
+            return;
+        }
+
+        Common::table();
+
+        $this->render('table/row_action/confirm_delete', [
+            'db' => $db,
+            'table' => $table,
+            'selected' => $selected,
+            'sql_query' => $sql_query,
+            'is_foreign_key_check' => Util::isForeignKeyCheck(),
+        ]);
+    }
+
+    public function edit(): void
     {
         global $containerBuilder, $submit_mult, $active_page, $where_clause;
 
-        $submit_mult = $submit_mult === 'copy' ? 'row_copy' : 'row_edit';
+        $submit_mult = $_POST['submit_mult'] ?? '';
+
+        if (empty($submit_mult)) {
+            return;
+        }
+
+        if ($submit_mult === 'edit') {
+            $submit_mult = 'row_edit';
+        } elseif ($submit_mult === 'copy') {
+            $submit_mult = 'row_copy';
+        }
 
         if ($submit_mult === 'row_copy') {
             $_POST['default_action'] = 'insert';
@@ -138,6 +134,8 @@ class RowActionController extends AbstractController
         if (isset($_POST['goto']) && (! isset($_POST['rows_to_delete']) || ! is_array($_POST['rows_to_delete']))) {
             $this->response->setRequestStatus(false);
             $this->response->addJSON('message', __('No row selected.'));
+
+            return;
         }
 
         // As we got the rows to be edited from the
@@ -158,15 +156,17 @@ class RowActionController extends AbstractController
         $controller->index();
     }
 
-    private function export(): void
+    public function export(): void
     {
-        global $containerBuilder, $submit_mult, $active_page, $single_table, $where_clause;
+        global $containerBuilder, $active_page, $single_table, $where_clause, $submit_mult;
 
         $submit_mult = 'row_export';
 
         if (isset($_POST['goto']) && (! isset($_POST['rows_to_delete']) || ! is_array($_POST['rows_to_delete']))) {
             $this->response->setRequestStatus(false);
             $this->response->addJSON('message', __('No row selected.'));
+
+            return;
         }
 
         // Needed to allow SQL export

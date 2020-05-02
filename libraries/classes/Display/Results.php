@@ -736,7 +736,7 @@ class Results
      * Return true if we are executing a query in the form of
      * "SELECT * FROM <a table> ..."
      *
-     * @see     _getTableHeaders(), _getColumnParams()
+     * @see getTableHeaders(), _getColumnParams()
      *
      * @param array $analyzed_sql_results analyzed sql results
      *
@@ -877,16 +877,14 @@ class Results
      * @param bool   $isInnodb      whether its InnoDB or not
      * @param string $sortByKeyHtml the sort by key dialog
      *
-     * @return string html content
-     *
-     * @access private
+     * @return array
      */
-    private function _getTableNavigation(
+    private function getTableNavigation(
         $posNext,
         $posPrevious,
         $isInnodb,
         $sortByKeyHtml
-    ): string {
+    ): array {
         $isShowingAll = $_SESSION['tmpval']['max_rows'] === self::ALL_ROWS;
 
         // Move to the beginning or to the previous page
@@ -930,7 +928,7 @@ class Results
             'goto' => $this->__get('goto'),
         ];
 
-        return $this->template->render('display/results/table_navigation', [
+        return [
             'move_backward_buttons' => $moveBackwardButtons,
             'page_selector' => $pageSelector,
             'move_forward_buttons' => $moveForwardButtons,
@@ -938,19 +936,17 @@ class Results
             'has_show_all' => $GLOBALS['cfg']['ShowAll'] || ($this->__get('unlim_num_rows') <= 500),
             'hidden_fields' => $hiddenFields,
             'session_max_rows' => $isShowingAll ? $GLOBALS['cfg']['MaxRows'] : 'all',
-            'unique_id' => $this->__get('unique_id'),
             'is_showing_all' => $isShowingAll,
-            'unlim_num_rows' => $this->__get('unlim_num_rows'),
             'max_rows' => $_SESSION['tmpval']['max_rows'],
             'pos' => $_SESSION['tmpval']['pos'],
             'sort_by_key' => $sortByKeyHtml,
-        ]);
+        ];
     }
 
     /**
      * Prepare move backward buttons - previous and first
      *
-     * @see     _getTableNavigation()
+     * @see getTableNavigation()
      *
      * @param string $html_sql_query the sql encoded by html special characters
      * @param int    $pos_prev       the offset for the "previous" page
@@ -982,7 +978,7 @@ class Results
     /**
      * Prepare move forward buttons - next and last
      *
-     * @see    _getTableNavigation()
+     * @see getTableNavigation()
      *
      * @param string $html_sql_query the sql encoded by htmlspecialchars()
      * @param int    $pos_next       the offset for the "next" page
@@ -1048,7 +1044,7 @@ class Results
     /**
      * Get the headers of the results table, for all of the columns
      *
-     * @see    getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array  $displayParts                which elements to display
      * @param array  $analyzed_sql_results        analyzed sql results
@@ -1175,11 +1171,9 @@ class Results
      * @param array        $sortDirection             sort direction
      * @param bool         $isLimitedDisplay          with limited operations or not
      *
-     * @return string html content
-     *
-     * @access private
+     * @return array
      */
-    private function _getTableHeaders(
+    private function getTableHeaders(
         array &$displayParts,
         array $analyzedSqlResults,
         $unsortedSqlQuery,
@@ -1187,14 +1181,14 @@ class Results
         $sortExpressionNoDirection = '',
         array $sortDirection = [],
         $isLimitedDisplay = false
-    ): string {
+    ): array {
         // Needed for use in isset/empty or
         // use with array indexes/safe use in foreach
         $printView = $this->__get('printview');
         $displayParams = $this->__get('display_params');
 
         // Output data needed for column reordering and show/hide column
-        $dataForResettingColumnOrder = $this->_getDataForResettingColumnOrder($analyzedSqlResults);
+        $columnOrder = $this->getDataForResettingColumnOrder($analyzedSqlResults);
 
         $displayParams['emptypre'] = 0;
         $displayParams['emptyafter'] = 0;
@@ -1204,9 +1198,9 @@ class Results
         $this->__set('display_params', $displayParams);
 
         // Display options (if we are not in print view)
-        $optionsBlock = '';
+        $optionsBlock = [];
         if (! (isset($printView) && ($printView == '1')) && ! $isLimitedDisplay) {
-            $optionsBlock = $this->_getOptionsBlock();
+            $optionsBlock = $this->getOptionsBlock();
 
             // prepare full/partial text button or link
             $fullOrPartialTextLink = $this->_getFullOrPartialTextButtonOrLink();
@@ -1248,26 +1242,21 @@ class Results
             );
         }
 
-        return $this->template->render('display/results/table_headers', [
-            'db' => $this->__get('db'),
-            'table' => $this->__get('table'),
-            'unique_id' => $this->__get('unique_id'),
-            'save_cells_at_once' => $GLOBALS['cfg']['SaveCellsAtOnce'],
-            'data_for_resetting_column_order' => $dataForResettingColumnOrder,
-            'options_block' => $optionsBlock,
-            'delete_link' => $displayParts['del_lnk'],
-            'delete_row' => self::DELETE_ROW,
-            'kill_process' => self::KILL_PROCESS,
+        return [
+            'column_order' => $columnOrder,
+            'options' => $optionsBlock,
+            'has_bulk_actions_form' => $displayParts['del_lnk'] === self::DELETE_ROW
+                || $displayParts['del_lnk'] === self::KILL_PROCESS,
             'button' => $buttonHtml,
             'table_headers_for_columns' => $tableHeadersForColumns,
             'column_at_right_side' => $columnAtRightSide,
-        ]);
+        ];
     }
 
     /**
      * Prepare unsorted sql query and sort by key drop down
      *
-     * @see    _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array      $analyzed_sql_results analyzed sql results
      * @param array|null $sort_expression      sort expression
@@ -1316,7 +1305,7 @@ class Results
     /**
      * Prepare sort by key dropdown - html code segment
      *
-     * @see _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param Index[]    $indexes          the indexes of the table for sort criteria
      * @param array|null $sortExpression   the sort expression
@@ -1396,7 +1385,7 @@ class Results
      * Set column span, row span and prepare html with full/partial
      * text button or link
      *
-     * @see    _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array  $displayParts              which elements to display
      * @param string $full_or_partial_text_link full/partial link or text button
@@ -1465,7 +1454,7 @@ class Results
     /**
      * Get table comments as array
      *
-     * @see     _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array $analyzed_sql_results analyzed sql results
      *
@@ -1498,7 +1487,7 @@ class Results
     /**
      * Set global array for store highlighted header fields
      *
-     * @see     _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array $analyzed_sql_results analyzed sql results
      *
@@ -1524,18 +1513,16 @@ class Results
     /**
      * Prepare data for column restoring and show/hide
      *
-     * @see _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array $analyzedSqlResults analyzed sql results
      *
-     * @return string html content
-     *
-     * @access private
+     * @return array
      */
-    private function _getDataForResettingColumnOrder(array $analyzedSqlResults): string
+    private function getDataForResettingColumnOrder(array $analyzedSqlResults): array
     {
         if (! $this->_isSelect($analyzedSqlResults)) {
-            return '';
+            return [];
         }
 
         [$columnOrder, $columnVisibility] = $this->_getColumnParams(
@@ -1551,53 +1538,43 @@ class Results
             )->getStatusInfo('Create_time');
         }
 
-        return $this->template->render('display/results/data_for_resetting_column_order', [
-            'column_order' => $columnOrder,
-            'column_visibility' => $columnVisibility,
+        return [
+            'order' => $columnOrder,
+            'visibility' => $columnVisibility,
             'is_view' => $table->isView(),
             'table_create_time' => $tableCreateTime,
-        ]);
+        ];
     }
 
     /**
      * Prepare option fields block
      *
-     * @see _getTableHeaders()
+     * @see getTableHeaders()
      *
-     * @return string html content
-     *
-     * @access private
+     * @return array
      */
-    private function _getOptionsBlock()
+    private function getOptionsBlock(): array
     {
         if (isset($_SESSION['tmpval']['possible_as_geometry']) && $_SESSION['tmpval']['possible_as_geometry'] == false) {
             if ($_SESSION['tmpval']['geoOption'] == self::GEOMETRY_DISP_GEOM) {
                 $_SESSION['tmpval']['geoOption'] = self::GEOMETRY_DISP_WKT;
             }
         }
-        return $this->template->render('display/results/options_block', [
-            'unique_id' => $this->__get('unique_id'),
+        return [
             'geo_option' => $_SESSION['tmpval']['geoOption'],
             'hide_transformation' => $_SESSION['tmpval']['hide_transformation'],
             'display_blob' => $_SESSION['tmpval']['display_blob'],
             'display_binary' => $_SESSION['tmpval']['display_binary'],
             'relational_display' => $_SESSION['tmpval']['relational_display'],
-            'displaywork' => $GLOBALS['cfgRelation']['displaywork'],
-            'relwork' => $GLOBALS['cfgRelation']['relwork'],
             'possible_as_geometry' => $_SESSION['tmpval']['possible_as_geometry'],
             'pftext' => $_SESSION['tmpval']['pftext'],
-            'db' => $this->__get('db'),
-            'table' => $this->__get('table'),
-            'sql_query' => $this->__get('sql_query'),
-            'goto' => $this->__get('goto'),
-            'default_sliders_state' => $GLOBALS['cfg']['InitialSlidersState'],
-        ]);
+        ];
     }
 
     /**
      * Get full/partial text button or link
      *
-     * @see     _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @return string html content
      *
@@ -1634,7 +1611,7 @@ class Results
     /**
      * Get comment for row
      *
-     * @see _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array $commentsMap comments array
      * @param array $fieldsMeta  set of field properties
@@ -1655,7 +1632,7 @@ class Results
     /**
      * Prepare parameters and html for sorted table header fields
      *
-     * @see    _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param stdClass $fields_meta                 set of field properties
      * @param array    $sort_expression             sort expression
@@ -1918,7 +1895,7 @@ class Results
     /**
      * Check whether the column is sorted
      *
-     * @see     _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array  $sort_expression             sort expression
      * @param array  $sort_expression_nodirection sort expression without direction
@@ -2055,7 +2032,7 @@ class Results
     /**
      * Get sort order link
      *
-     * @see    _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param string   $order_img       the sort order image
      * @param stdClass $fields_meta     set of field properties
@@ -2111,7 +2088,7 @@ class Results
     /**
      * Prepare columns to draggable effect for sortable columns
      *
-     * @see    _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param bool     $col_visib   the column is visible (false)
      *                              array                the column is not visible (string array)
@@ -2159,7 +2136,7 @@ class Results
     /**
      * Prepare columns to draggable effect for non sortable columns
      *
-     * @see    _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param bool     $col_visib       the column is visible (false)
      *                                  array                    the column is not visible (string array)
@@ -2206,7 +2183,7 @@ class Results
     /**
      * Prepare column to show at right side - check boxes or empty column
      *
-     * @see     _getTableHeaders()
+     * @see getTableHeaders()
      *
      * @param array  $displayParts              which elements to display
      * @param string $full_or_partial_text_link full/partial link or text button
@@ -2585,39 +2562,31 @@ class Results
                 if (($GLOBALS['cfg']['RowActionLinks'] == self::POSITION_LEFT)
                     || ($GLOBALS['cfg']['RowActionLinks'] == self::POSITION_BOTH)
                 ) {
-                    $table_body_html .= $this->_getPlacedLinks(
-                        self::POSITION_LEFT,
-                        $del_url,
-                        $displayParts,
-                        $row_no,
-                        $where_clause,
-                        $where_clause_html,
-                        $condition_array,
-                        $edit_url,
-                        $copy_url,
-                        $edit_anchor_class,
-                        $edit_str,
-                        $copy_str,
-                        $del_str,
-                        $js_conf
-                    );
+                    $table_body_html .= $this->template->render('display/results/checkbox_and_links', [
+                        'position' => self::POSITION_LEFT,
+                        'has_checkbox' => ! empty($del_url) && $displayParts['del_lnk'] !== self::KILL_PROCESS,
+                        'edit' => ['url' => $edit_url, 'string' => $edit_str, 'clause_is_unique' => $clause_is_unique],
+                        'copy' => ['url' => $copy_url, 'string' => $copy_str],
+                        'delete' => ['url' => $del_url, 'string' => $del_str],
+                        'row_number' => $row_no,
+                        'where_clause' => $where_clause,
+                        'condition' => json_encode($condition_array),
+                        'is_ajax' => Response::getInstance()->isAjax(),
+                        'js_conf' => $js_conf ?? '',
+                    ]);
                 } elseif ($GLOBALS['cfg']['RowActionLinks'] == self::POSITION_NONE) {
-                    $table_body_html .= $this->_getPlacedLinks(
-                        self::POSITION_NONE,
-                        $del_url,
-                        $displayParts,
-                        $row_no,
-                        $where_clause,
-                        $where_clause_html,
-                        $condition_array,
-                        $edit_url,
-                        $copy_url,
-                        $edit_anchor_class,
-                        $edit_str,
-                        $copy_str,
-                        $del_str,
-                        $js_conf
-                    );
+                    $table_body_html .= $this->template->render('display/results/checkbox_and_links', [
+                        'position' => self::POSITION_NONE,
+                        'has_checkbox' => ! empty($del_url) && $displayParts['del_lnk'] !== self::KILL_PROCESS,
+                        'edit' => ['url' => $edit_url, 'string' => $edit_str, 'clause_is_unique' => $clause_is_unique],
+                        'copy' => ['url' => $copy_url, 'string' => $copy_str],
+                        'delete' => ['url' => $del_url, 'string' => $del_str],
+                        'row_number' => $row_no,
+                        'where_clause' => $where_clause,
+                        'condition' => json_encode($condition_array),
+                        'is_ajax' => Response::getInstance()->isAjax(),
+                        'js_conf' => $js_conf ?? '',
+                    ]);
                 } // end if (1.3)
             } // end if (1)
 
@@ -2644,22 +2613,18 @@ class Results
                 if (($GLOBALS['cfg']['RowActionLinks'] == self::POSITION_RIGHT)
                     || ($GLOBALS['cfg']['RowActionLinks'] == self::POSITION_BOTH)
                 ) {
-                    $table_body_html .= $this->_getPlacedLinks(
-                        self::POSITION_RIGHT,
-                        $del_url,
-                        $displayParts,
-                        $row_no,
-                        $where_clause ?? '',
-                        $where_clause_html ?? '',
-                        $condition_array ?? [],
-                        $edit_url,
-                        $copy_url,
-                        $edit_anchor_class,
-                        $edit_str,
-                        $copy_str,
-                        $del_str,
-                        $js_conf
-                    );
+                    $table_body_html .= $this->template->render('display/results/checkbox_and_links', [
+                        'position' => self::POSITION_RIGHT,
+                        'has_checkbox' => ! empty($del_url) && $displayParts['del_lnk'] !== self::KILL_PROCESS,
+                        'edit' => ['url' => $edit_url, 'string' => $edit_str, 'clause_is_unique' => $clause_is_unique ?? true],
+                        'copy' => ['url' => $copy_url, 'string' => $copy_str],
+                        'delete' => ['url' => $del_url, 'string' => $del_str],
+                        'row_number' => $row_no,
+                        'where_clause' => $where_clause ?? '',
+                        'condition' => json_encode($condition_array ?? []),
+                        'is_ajax' => Response::getInstance()->isAjax(),
+                        'js_conf' => $js_conf ?? '',
+                    ]);
                 }
             } // end if (3)
 
@@ -3411,68 +3376,6 @@ class Results
         }
 
         return $linkContent;
-    }
-
-    /**
-     * Prepare placed links
-     *
-     * @see     _getTableBody()
-     *
-     * @param string      $dir               the direction of links should place
-     * @param string      $del_url           the url for delete row
-     * @param array       $displayParts      which elements to display
-     * @param int         $row_no            the index of current row
-     * @param string      $where_clause      the where clause of the sql
-     * @param string      $where_clause_html the html encoded where clause
-     * @param array       $condition_array   array of keys (primary, unique, condition)
-     * @param string      $edit_url          the url for edit row
-     * @param string      $copy_url          the url for copy row
-     * @param string      $edit_anchor_class the class for html element for edit
-     * @param string      $edit_str          the label for edit row
-     * @param string      $copy_str          the label for copy row
-     * @param string      $del_str           the label for delete row
-     * @param string|null $js_conf           text for the JS confirmation
-     *
-     * @return string                      html content
-     *
-     * @access private
-     */
-    private function _getPlacedLinks(
-        $dir,
-        $del_url,
-        array $displayParts,
-        $row_no,
-        $where_clause,
-        $where_clause_html,
-        array $condition_array,
-        $edit_url,
-        $copy_url,
-        $edit_anchor_class,
-        $edit_str,
-        $copy_str,
-        $del_str,
-        ?string $js_conf
-    ) {
-        if (! isset($js_conf)) {
-            $js_conf = '';
-        }
-
-        return $this->_getCheckboxAndLinks(
-            $dir,
-            $del_url,
-            $displayParts,
-            $row_no,
-            $where_clause,
-            $where_clause_html,
-            $condition_array,
-            $edit_url,
-            $copy_url,
-            $edit_anchor_class,
-            $edit_str,
-            $copy_str,
-            $del_str,
-            $js_conf
-        );
     }
 
     /**
@@ -4245,9 +4148,9 @@ class Results
             $sort_by_key_html = $unsorted_sql_query = '';
         }
 
-        $navigation = '';
+        $navigation = [];
         if ($displayParts['nav_bar'] == '1' && $statement !== null && empty($statement->limit)) {
-            $navigation = $this->_getTableNavigation(
+            $navigation = $this->getTableNavigation(
                 $pos_next,
                 $pos_prev,
                 $is_innodb,
@@ -4279,7 +4182,7 @@ class Results
         // end 2b
 
         // 3. ----- Prepare the results table -----
-        $headers = $this->_getTableHeaders(
+        $headers = $this->getTableHeaders(
             $displayParts,
             $analyzed_sql_results,
             $unsorted_sql_query,
@@ -4300,21 +4203,16 @@ class Results
         $this->__set('display_params', null);
 
         // 4. ----- Prepares the link for multi-fields edit and delete
-        $multiRowOperationLinks = '';
-        if ($displayParts['del_lnk'] == self::DELETE_ROW
-            && $displayParts['del_lnk'] != self::KILL_PROCESS
-        ) {
-            $multiRowOperationLinks = $this->_getMultiRowOperationLinks(
-                $dt_result,
-                $analyzed_sql_results,
-                $displayParts['del_lnk']
-            );
-        }
+        $bulkLinks = $this->getBulkLinks(
+            $dt_result,
+            $analyzed_sql_results,
+            $displayParts['del_lnk']
+        );
 
         // 5. ----- Prepare "Query results operations"
-        $operations = '';
+        $operations = [];
         if ((! isset($printview) || ($printview != '1')) && ! $is_limited_display) {
-            $operations = $this->_getResultsOperations(
+            $operations = $this->getResultsOperations(
                 $displayParts,
                 $analyzed_sql_results
             );
@@ -4325,8 +4223,21 @@ class Results
             'navigation' => $navigation,
             'headers' => $headers,
             'body' => $body,
-            'multi_row_operation_links' => $multiRowOperationLinks,
+            'bulk_links' => $bulkLinks,
             'operations' => $operations,
+            'db' => $this->__get('db'),
+            'table' => $this->__get('table'),
+            'unique_id' => $this->__get('unique_id'),
+            'sql_query' => $this->__get('sql_query'),
+            'url_query' => $this->__get('url_query'),
+            'goto' => $this->__get('goto'),
+            'unlim_num_rows' => $this->__get('unlim_num_rows'),
+            'displaywork' => $GLOBALS['cfgRelation']['displaywork'],
+            'relwork' => $GLOBALS['cfgRelation']['relwork'],
+            'save_cells_at_once' => $GLOBALS['cfg']['SaveCellsAtOnce'],
+            'default_sliders_state' => $GLOBALS['cfg']['InitialSlidersState'],
+            'select_all_arrow' => $this->__get('pma_theme_image') . 'arrow_'
+                . $this->__get('text_dir') . '.png',
         ]);
     }
 
@@ -4664,136 +4575,52 @@ class Results
      * @param array  $analyzed_sql_results analyzed sql results
      * @param string $del_link             the display element - 'del_link'
      *
-     * @return string html content
-     *
-     * @access private
+     * @return array
      */
-    private function _getMultiRowOperationLinks(
+    private function getBulkLinks(
         &$dt_result,
         array $analyzed_sql_results,
         $del_link
-    ) {
-        $links_html = '<div class="print_ignore" >';
-        $url_query = $this->__get('url_query');
-        $delete_text = $del_link == self::DELETE_ROW ? __('Delete') : __('Kill');
+    ): array {
+        global $dbi;
 
-        $links_html .= $this->template->render('select_all', [
-            'pma_theme_image' => $this->__get('pma_theme_image'),
-            'text_dir' => $this->__get('text_dir'),
-            'form_name' => 'resultsForm_' . $this->__get('unique_id'),
-        ]);
-
-        $links_html .= Generator::getButtonOrImage(
-            'submit_mult',
-            'mult_submit',
-            __('Edit'),
-            'b_edit',
-            'edit'
-        );
-
-        $links_html .= Generator::getButtonOrImage(
-            'submit_mult',
-            'mult_submit',
-            __('Copy'),
-            'b_insrow',
-            'copy'
-        );
-
-        $links_html .= Generator::getButtonOrImage(
-            'submit_mult',
-            'mult_submit',
-            $delete_text,
-            'b_drop',
-            'delete'
-        );
-
-        if ($analyzed_sql_results['querytype'] == 'SELECT') {
-            $links_html .= Generator::getButtonOrImage(
-                'submit_mult',
-                'mult_submit',
-                __('Export'),
-                'b_tblexport',
-                'export'
-            );
-        }
-
-        $links_html .= "</div>\n";
-
-        $links_html .= '<input type="hidden" name="sql_query"'
-            . ' value="' . htmlspecialchars($this->__get('sql_query')) . '">'
-            . "\n";
-
-        if (! empty($url_query)) {
-            $links_html .= '<input type="hidden" name="url_query"'
-                . ' value="' . $url_query . '">' . "\n";
+        if ($del_link !== self::DELETE_ROW) {
+            return [];
         }
 
         // fetch last row of the result set
-        $GLOBALS['dbi']->dataSeek($dt_result, $this->__get('num_rows') - 1);
-        $row = $GLOBALS['dbi']->fetchRow($dt_result);
+        $dbi->dataSeek($dt_result, $this->__get('num_rows') - 1);
+        $row = $dbi->fetchRow($dt_result);
 
         // @see DbiMysqi::fetchRow & DatabaseInterface::fetchRow
         if (! is_array($row)) {
             $row = [];
         }
 
-        // $clause_is_unique is needed by getTable() to generate the proper param
-        // in the multi-edit and multi-delete form
-        [$where_clause, $clause_is_unique, $condition_array]
-            = Util::getUniqueCondition(
-                $dt_result, // handle
-                $this->__get('fields_cnt'), // fields_cnt
-                $this->__get('fields_meta'), // fields_meta
-                $row, // row
-                false, // force_unique
-                false, // restrict_to_table
-                $analyzed_sql_results // analyzed_sql_results
-            );
-        unset($where_clause, $condition_array);
+        /**
+         * $clause_is_unique is needed by getTable() to generate the proper param
+         * in the multi-edit and multi-delete form
+         */
+        list(, $clause_is_unique,) = Util::getUniqueCondition(
+            $dt_result,
+            $this->__get('fields_cnt'),
+            $this->__get('fields_meta'),
+            $row,
+            false,
+            false,
+            $analyzed_sql_results
+        );
 
         // reset to first row for the loop in _getTableBody()
-        $GLOBALS['dbi']->dataSeek($dt_result, 0);
+        $dbi->dataSeek($dt_result, 0);
 
-        $links_html .= '<input type="hidden" name="clause_is_unique"'
-            . ' value="' . $clause_is_unique . '">' . "\n";
-
-        $links_html .= '</form>' . "\n";
-
-        return $links_html;
+        return [
+            'has_export_button' => $analyzed_sql_results['querytype'] === 'SELECT',
+            'clause_is_unique' => $clause_is_unique,
+        ];
     }
 
     /**
-     * Generates HTML to display the Create view in span tag
-     *
-     * @see _getResultsOperations()
-     *
-     * @param array $analyzed_sql_results analyzed sql results
-     * @param array $params               Array with URL Parameters
-     *
-     * @access private
-     */
-    private function _getLinkForCreateView(array $analyzed_sql_results, array $params): string
-    {
-        $results_operations_html = '';
-        if (empty($analyzed_sql_results['procedure'])) {
-            $results_operations_html .= '<span>'
-                . Generator::linkOrButton(
-                    Url::getFromRoute('/view/create', $params),
-                    Generator::getIcon(
-                        'b_view_add',
-                        __('Create view'),
-                        true
-                    ),
-                    ['class' => 'create_view ajax btn']
-                )
-                . '</span>' . "\n";
-        }
-        return $results_operations_html;
-    }
-
-    /**
-     * Calls the _getResultsOperations with $only_view as true
-     *
      * @param array $analyzed_sql_results analyzed sql results
      *
      * @return string
@@ -4802,62 +4629,31 @@ class Results
      */
     public function getCreateViewQueryResultOp(array $analyzed_sql_results)
     {
-        $results_operations_html = '';
-        //calling to _getResultOperations with a fake $displayParts
-        //and setting only_view parameter to be true to generate just view
-        $results_operations_html .= $this->_getResultsOperations(
-            [],
-            $analyzed_sql_results,
-            true
+        if (! empty($analyzed_sql_results['procedure'])) {
+            return '';
+        }
+
+        $results_operations_html = '<fieldset class="print_ignore" ><legend>'
+            . __('Query results operations') . '</legend>';
+        $results_operations_html .= '<span>';
+        $results_operations_html .= Generator::linkOrButton(
+            Url::getFromRoute('/view/create', [
+                'db' => $this->__get('db'),
+                'table' => $this->__get('table'),
+                'printview' => '1',
+                'sql_query' => $this->__get('sql_query'),
+            ]),
+            Generator::getIcon(
+                'b_view_add',
+                __('Create view'),
+                true
+            ),
+            ['class' => 'create_view ajax btn']
         );
+        $results_operations_html .= '</span>' . "\n";
+        $results_operations_html .= '</fieldset><br>';
+
         return $results_operations_html;
-    }
-
-    /**
-     * Get copy to clipboard links for results operations
-     *
-     * @return string
-     *
-     * @access private
-     */
-    private function _getCopytoclipboardLinks()
-    {
-        return Generator::linkOrButton(
-            '#',
-            Generator::getIcon(
-                'b_insrow',
-                __('Copy to clipboard'),
-                true
-            ),
-            [
-                'id' => 'copyToClipBoard' ,
-                'class' => 'btn',
-            ]
-        );
-    }
-
-    /**
-     * Get printview links for results operations
-     *
-     * @return string
-     *
-     * @access private
-     */
-    private function _getPrintviewLinks()
-    {
-        return Generator::linkOrButton(
-            '#',
-            Generator::getIcon(
-                'b_print',
-                __('Print'),
-                true
-            ),
-            [
-                'id' => 'printView' ,
-                'class' => 'btn',
-            ],
-            'print_view'
-        );
     }
 
     /**
@@ -4867,24 +4663,14 @@ class Results
      *
      * @param array $displayParts         the parts to display
      * @param array $analyzed_sql_results analyzed sql results
-     * @param bool  $only_view            Whether to show only view
      *
-     * @return string  html content
-     *
-     * @access private
+     * @return array<string, bool|array<string, string>>
      */
-    private function _getResultsOperations(
+    private function getResultsOperations(
         array $displayParts,
-        array $analyzed_sql_results,
-        $only_view = false
-    ) {
+        array $analyzed_sql_results
+    ): array {
         global $printview;
-
-        $results_operations_html = '';
-        $fields_meta = $this->__get('fields_meta'); // To safe use in foreach
-        $header_shown = false;
-        $header = '<fieldset class="print_ignore" ><legend>'
-            . __('Query results operations') . '</legend>';
 
         $_url_params = [
             'db'        => $this->__get('db'),
@@ -4892,31 +4678,8 @@ class Results
             'printview' => '1',
             'sql_query' => $this->__get('sql_query'),
         ];
-        $params = $_url_params;
 
-        if (! $header_shown) {
-            $results_operations_html .= $header;
-            $header_shown = true;
-        }
-        // if empty result set was produced we need to
-        // show only view and not other options
-        if ($only_view) {
-            $results_operations_html .= $this->_getLinkForCreateView(
-                $analyzed_sql_results,
-                $params
-            );
-
-            if ($header_shown) {
-                $results_operations_html .= '</fieldset><br>';
-            }
-            return $results_operations_html;
-        }
-
-        // Displays "printable view" link if required
-        if ($displayParts['pview_lnk'] == '1') {
-            $results_operations_html .= $this->_getPrintviewLinks();
-            $results_operations_html .= $this->_getCopytoclipboardLinks();
-        } // end displays "printable view"
+        $geometry_found = false;
 
         // Export link
         // (the url_query has extra parameters that won't be used to export)
@@ -4939,11 +4702,6 @@ class Results
                 $_url_params['raw_query'] = 'true';
             }
 
-            if (! $header_shown) {
-                $results_operations_html .= $header;
-                $header_shown = true;
-            }
-
             $_url_params['unlim_num_rows'] = $this->__get('unlim_num_rows');
 
             /**
@@ -4962,74 +4720,22 @@ class Results
                 }
             }
 
-            $results_operations_html .= Generator::linkOrButton(
-                    Url::getFromRoute('/table/export', $_url_params),
-                    Generator::getIcon(
-                        'b_tblexport',
-                        __('Export'),
-                        true
-                ),
-                ['class' => 'btn']
-            );
-
-            // prepare chart
-            $results_operations_html .= Generator::linkOrButton(
-                    Url::getFromRoute('/table/chart', $_url_params),
-                    Generator::getIcon(
-                        'b_chart',
-                        __('Display chart'),
-                        true
-                ),
-                ['class' => 'btn']
-            );
-
-            // prepare GIS chart
-            $geometry_found = false;
-            // If at least one geometry field is found
+            $fields_meta = $this->__get('fields_meta');
             foreach ($fields_meta as $meta) {
                 if ($meta->type == self::GEOMETRY_FIELD) {
                     $geometry_found = true;
                     break;
                 }
             }
-
-            if ($geometry_found) {
-                $results_operations_html
-                    .= Generator::linkOrButton(
-                        Url::getFromRoute('/table/gis-visualization', $_url_params),
-                        Generator::getIcon(
-                            'b_globe',
-                            __('Visualize GIS data'),
-                            true
-                        ),
-                        ['class' => 'btn']
-                    );
-            }
         }
 
-        // CREATE VIEW
-
-        /**
-         * @todo detect privileges to create a view
-         *       (but see 2006-01-19 note in PhpMyAdmin\Display\CreateTable,
-         *        I think we cannot detect db-specific privileges reliably)
-         * Note: we don't display a Create view link if we found a PROCEDURE clause
-         */
-        if (! $header_shown) {
-            $results_operations_html .= $header;
-            $header_shown = true;
-        }
-
-        $results_operations_html .= $this->_getLinkForCreateView(
-            $analyzed_sql_results,
-            $params
-        );
-
-        if ($header_shown) {
-            $results_operations_html .= '</fieldset><br>';
-        }
-
-        return $results_operations_html;
+        return [
+            'has_procedure' => ! empty($analyzed_sql_results['procedure']),
+            'has_geometry' => $geometry_found,
+            'has_print_link' => $displayParts['pview_lnk'] == '1',
+            'has_export_link' => $analyzed_sql_results['querytype'] === self::QUERY_TYPE_SELECT && ! isset($printview),
+            'url_params' => $_url_params,
+        ];
     }
 
     /**
@@ -5366,295 +5072,6 @@ class Results
         $result .= '</td>' . "\n";
 
         return $result;
-    }
-
-    /**
-     * Prepares a checkbox for multi-row submits
-     *
-     * @see     _getTableBody(), _getCheckboxAndLinks()
-     *
-     * @param string $del_url           delete url
-     * @param array  $displayParts      array with explicit indexes for all
-     *                                  the display elements
-     * @param string $row_no            the row number
-     * @param string $where_clause_html url encoded where clause
-     * @param array  $condition_array   array of conditions in the where clause
-     * @param string $id_suffix         suffix for the id
-     * @param string $class             css classes for the td element
-     *
-     * @return string  the generated HTML
-     *
-     * @access private
-     */
-    private function _getCheckboxForMultiRowSubmissions(
-        $del_url,
-        array $displayParts,
-        $row_no,
-        $where_clause_html,
-        array $condition_array,
-        $id_suffix,
-        $class
-    ) {
-        $ret = '';
-
-        if (! empty($del_url) && $displayParts['del_lnk'] != self::KILL_PROCESS) {
-            $ret .= '<td ';
-            if (! empty($class)) {
-                $ret .= 'class="' . $class . '"';
-            }
-
-            $ret .= ' class="text-center print_ignore">'
-                . '<input type="checkbox" id="id_rows_to_delete'
-                . $row_no . $id_suffix
-                . '" name="rows_to_delete[' . $row_no . ']"'
-                . ' class="multi_checkbox checkall"'
-                . ' value="' . $where_clause_html . '">'
-                . '<input type="hidden" class="condition_array" value="'
-                . htmlspecialchars(json_encode($condition_array)) . '">'
-                . '    </td>';
-        }
-
-        return $ret;
-    }
-
-    /**
-     * Prepares an Edit link
-     *
-     * @see     _getTableBody(), _getCheckboxAndLinks()
-     *
-     * @param string $edit_url          edit url
-     * @param string $class             css classes for td element
-     * @param string $edit_str          text for the edit link
-     * @param string $where_clause      where clause
-     * @param string $where_clause_html url encoded where clause
-     *
-     * @return string  the generated HTML
-     *
-     * @access private
-     */
-    private function _getEditLink(
-        $edit_url,
-        $class,
-        $edit_str,
-        $where_clause,
-        $where_clause_html
-    ) {
-        $ret = '';
-        if (! empty($edit_url)) {
-            $ret .= '<td class="' . $class . ' text-center print_ignore">'
-                . '<span class="nowrap">'
-                . Generator::linkOrButton($edit_url, $edit_str);
-            /*
-             * Where clause for selecting this row uniquely is provided as
-             * a hidden input. Used by jQuery scripts for handling grid editing
-             */
-            if (! empty($where_clause)) {
-                $ret .= '<input type="hidden" class="where_clause" value ="'
-                    . $where_clause_html . '">';
-            }
-            $ret .= '</span></td>';
-        }
-
-        return $ret;
-    }
-
-    /**
-     * Prepares an Copy link
-     *
-     * @see     _getTableBody(), _getCheckboxAndLinks()
-     *
-     * @param string $copy_url          copy url
-     * @param string $copy_str          text for the copy link
-     * @param string $where_clause      where clause
-     * @param string $where_clause_html url encoded where clause
-     * @param string $class             css classes for the td element
-     *
-     * @return string  the generated HTML
-     *
-     * @access private
-     */
-    private function _getCopyLink(
-        $copy_url,
-        $copy_str,
-        $where_clause,
-        $where_clause_html,
-        $class
-    ) {
-        $ret = '';
-        if (! empty($copy_url)) {
-            $ret .= '<td class="';
-            if (! empty($class)) {
-                $ret .= $class . ' ';
-            }
-
-            $ret .= 'text-center print_ignore"><span class="nowrap">'
-               . Generator::linkOrButton($copy_url, $copy_str);
-
-            /*
-             * Where clause for selecting this row uniquely is provided as
-             * a hidden input. Used by jQuery scripts for handling grid editing
-             */
-            if (! empty($where_clause)) {
-                $ret .= '<input type="hidden" class="where_clause" value="'
-                    . $where_clause_html . '">';
-            }
-            $ret .= '</span></td>';
-        }
-
-        return $ret;
-    }
-
-    /**
-     * Prepares a Delete link
-     *
-     * @see     _getTableBody(), _getCheckboxAndLinks()
-     *
-     * @param string $del_url delete url
-     * @param string $del_str text for the delete link
-     * @param string $js_conf text for the JS confirmation
-     * @param string $class   css classes for the td element
-     *
-     * @return string  the generated HTML
-     *
-     * @access private
-     */
-    private function _getDeleteLink($del_url, $del_str, $js_conf, $class)
-    {
-        $ret = '';
-        if (empty($del_url)) {
-            return $ret;
-        }
-
-        $ret .= '<td class="';
-        if (! empty($class)) {
-            $ret .= $class . ' ';
-        }
-        $ajax = Response::getInstance()->isAjax() ? ' ajax' : '';
-        $ret .= 'text-center print_ignore">'
-            . Generator::linkOrButton(
-                $del_url,
-                $del_str,
-                ['class' => 'delete_row requireConfirm' . $ajax]
-            )
-            . '<div class="hide">' . $js_conf . '</div>'
-            . '</td>';
-
-        return $ret;
-    }
-
-    /**
-     * Prepare checkbox and links at some position (left or right)
-     * (only called for horizontal mode)
-     *
-     * @see     _getPlacedLinks()
-     *
-     * @param string $position          the position of the checkbox and links
-     * @param string $del_url           delete url
-     * @param array  $displayParts      array with explicit indexes for all the
-     *                                  display elements
-     * @param string $row_no            row number
-     * @param string $where_clause      where clause
-     * @param string $where_clause_html url encoded where clause
-     * @param array  $condition_array   array of conditions in the where clause
-     * @param string $edit_url          edit url
-     * @param string $copy_url          copy url
-     * @param string $class             css classes for the td elements
-     * @param string $edit_str          text for the edit link
-     * @param string $copy_str          text for the copy link
-     * @param string $del_str           text for the delete link
-     * @param string $js_conf           text for the JS confirmation
-     *
-     * @return string  the generated HTML
-     *
-     * @access private
-     */
-    private function _getCheckboxAndLinks(
-        $position,
-        $del_url,
-        array $displayParts,
-        $row_no,
-        $where_clause,
-        $where_clause_html,
-        array $condition_array,
-        $edit_url,
-        $copy_url,
-        $class,
-        $edit_str,
-        $copy_str,
-        $del_str,
-        $js_conf
-    ) {
-        $ret = '';
-
-        if ($position == self::POSITION_LEFT) {
-            $ret .= $this->_getCheckboxForMultiRowSubmissions(
-                $del_url,
-                $displayParts,
-                $row_no,
-                $where_clause_html,
-                $condition_array,
-                '_left',
-                ''
-            );
-
-            $ret .= $this->_getEditLink(
-                $edit_url,
-                $class,
-                $edit_str,
-                $where_clause,
-                $where_clause_html
-            );
-
-            $ret .= $this->_getCopyLink(
-                $copy_url,
-                $copy_str,
-                $where_clause,
-                $where_clause_html,
-                ''
-            );
-
-            $ret .= $this->_getDeleteLink($del_url, $del_str, $js_conf, '');
-        } elseif ($position == self::POSITION_RIGHT) {
-            $ret .= $this->_getDeleteLink($del_url, $del_str, $js_conf, '');
-
-            $ret .= $this->_getCopyLink(
-                $copy_url,
-                $copy_str,
-                $where_clause,
-                $where_clause_html,
-                ''
-            );
-
-            $ret .= $this->_getEditLink(
-                $edit_url,
-                $class,
-                $edit_str,
-                $where_clause,
-                $where_clause_html
-            );
-
-            $ret .= $this->_getCheckboxForMultiRowSubmissions(
-                $del_url,
-                $displayParts,
-                $row_no,
-                $where_clause_html,
-                $condition_array,
-                '_right',
-                ''
-            );
-        } else { // $position == self::POSITION_NONE
-            $ret .= $this->_getCheckboxForMultiRowSubmissions(
-                $del_url,
-                $displayParts,
-                $row_no,
-                $where_clause_html,
-                $condition_array,
-                '_left',
-                ''
-            );
-        }
-
-        return $ret;
     }
 
     /**

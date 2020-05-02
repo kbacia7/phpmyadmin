@@ -884,14 +884,14 @@ Functions.emptyCheckTheField = function (theForm, theFieldName) {
 Functions.checkFormElementInRange = function (theForm, theFieldName, message, minimum, maximum) {
     var theField         = theForm.elements[theFieldName];
     var val              = parseInt(theField.value, 10);
-    var min = minimum;
-    var max = maximum;
+    var min = 0;
+    var max = Number.MAX_VALUE;
 
-    if (typeof(min) === 'undefined') {
-        min = 0;
+    if (typeof(minimum) !== 'undefined') {
+        min = minimum;
     }
-    if (typeof(max) === 'undefined') {
-        max = Number.MAX_VALUE;
+    if (typeof(maximum) !== 'undefined' && maximum !== null) {
+        max = maximum;
     }
 
     if (isNaN(val)) {
@@ -3775,33 +3775,36 @@ AJAX.registerOnload('functions.js', function () {
      */
     $(document).on('click', '#index_frm input[type=submit]', function (event) {
         event.preventDefault();
-        var rowsToAdd = $(this)
-            .closest('fieldset')
-            .find('.slider')
-            .slider('value');
+        var hadAddButtonHidden = $(this).closest('fieldset').find('.add_fields').hasClass('hide');
+        if (hadAddButtonHidden === false) {
+            var rowsToAdd = $(this)
+                .closest('fieldset')
+                .find('.slider')
+                .slider('value');
 
-        var tempEmptyVal = function () {
-            $(this).val('');
-        };
+            var tempEmptyVal = function () {
+                $(this).val('');
+            };
 
-        var tempSetFocus = function () {
-            if ($(this).find('option:selected').val() === '') {
-                return true;
+            var tempSetFocus = function () {
+                if ($(this).find('option:selected').val() === '') {
+                    return true;
+                }
+                $(this).closest('tr').find('input').trigger('focus');
+            };
+
+            while (rowsToAdd--) {
+                var $indexColumns = $('#index_columns');
+                var $newrow = $indexColumns
+                    .find('tbody > tr').first()
+                    .clone()
+                    .appendTo(
+                        $indexColumns.find('tbody')
+                    );
+                $newrow.find(':input').each(tempEmptyVal);
+                // focus index size input on column picked
+                $newrow.find('select').on('change', tempSetFocus);
             }
-            $(this).closest('tr').find('input').trigger('focus');
-        };
-
-        while (rowsToAdd--) {
-            var $indexColumns = $('#index_columns');
-            var $newrow = $indexColumns
-                .find('tbody > tr').first()
-                .clone()
-                .appendTo(
-                    $indexColumns.find('tbody')
-                );
-            $newrow.find(':input').each(tempEmptyVal);
-            // focus index size input on column picked
-            $newrow.find('select').on('change', tempSetFocus);
         }
     });
 });
